@@ -3,278 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clover Portal - Financial & Budget Projection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <title>Py-bot: Maintenance Deck</title>
+    <!-- Load Brython (Python in the Browser) -->
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
+    
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --terminal: #121214;
+            --accent: #00ff41; /* Classic Terminal Green */
+            --text: #e0e0e0;
+            --danger: #ff4b2b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 10px 20px;
+            background: #1a1a1d;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Side: The Code Editor */
+        #editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--terminal);
+            padding: 15px;
+            border-right: 1px solid #333;
+        }
+
+        h3 { margin-top: 0; color: var(--accent); font-size: 1rem; }
+
+        #code-editor {
+            flex: 1;
+            background: #000;
+            color: var(--accent);
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+        }
+
+        #controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.8; }
+        #reset-btn { background: #555; color: white; }
+
+        /* Right Side: Game View */
+        #game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #0d0d0f;
+        }
+
+        #game-canvas {
+            background: #111;
+            border: 2px solid #333;
+            image-rendering: pixelated;
+        }
+
+        #level-info {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a1a1d;
+            border-left: 4px solid var(--accent);
+        }
+
+        #output-log {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .error { color: var(--danger); }
+        .success { color: var(--accent); font-weight: bold; }
+    </style>
 </head>
-<body class="bg-neutral-950 text-neutral-200 p-8 font-sans min-h-screen">
-    <div class="max-w-5xl mx-auto" x-data="budgetCalculator()">
-        <div class="flex justify-between items-center mb-8 border-b border-neutral-800 pb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-white mb-2">Clover Portal Financial Projections</h1>
-                <p class="text-neutral-400">Interactive budget sheet for revenue and expenses.</p>
+<body onload="brython()">
+
+    <header>
+        <div>PY-BOT v1.0.4 // REMOTE TERMINAL</div>
+        <div id="level-display">LEVEL 1: WAKE UP</div>
+    </header>
+
+    <div id="main-container">
+        <!-- CODE EDITOR AREA -->
+        <div id="editor-container">
+            <h3>&gt; MISSION_SCRIPT.PY</h3>
+            <textarea id="code-editor" spellcheck="false"># Level 1: Wake up the bot.
+# Type: robot.move()
+# Then click RUN SCRIPT.
+
+robot.move()</textarea>
+            <div id="controls">
+                <button id="run-btn">RUN SCRIPT</button>
+                <button id="reset-btn">RESET BOT</button>
             </div>
-            <button @click="exportCSV" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export as CSV
-            </button>
+            <div id="output-log">System initialized. Awaiting commands...</div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- INPUTS COLUMN -->
-            <div class="space-y-6">
-                <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="text-emerald-500">📈</span> Revenue Assumptions
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Single Tour Customers / Month</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" x-model.number="sales.single.count" class="w-24 bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-emerald-500">
-                                <span class="text-sm text-neutral-500">x $20</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Active Seller Pass (Subs)</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" x-model.number="sales.monthly.count" class="w-24 bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-emerald-500">
-                                <span class="text-sm text-neutral-500">x $50/mo</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Lifetime Customers / Month</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" x-model.number="sales.lifetime.count" class="w-24 bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-emerald-500">
-                                <span class="text-sm text-neutral-500">x $100</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="text-rose-400">📉</span> Variable Expenses
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Avg Video Gens per User</label>
-                            <input type="number" x-model.number="costs.gensPerUser" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-rose-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">ElevenLabs Cost per Gen ($)</label>
-                            <input type="number" step="0.01" x-model.number="costs.elevenLabsPerGen" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-rose-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Stripe Fee %</label>
-                            <input type="number" step="0.1" x-model.number="costs.stripePercent" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-rose-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Stripe Fixed Fee ($)</label>
-                            <input type="number" step="0.01" x-model.number="costs.stripeFixed" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-rose-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="text-amber-400">🏢</span> Fixed Monthly Overheads
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Supabase Plan ($)</label>
-                            <input type="number" x-model.number="costs.supabase" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Vercel Hosting ($)</label>
-                            <input type="number" x-model.number="costs.vercel" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Marketing / Ads ($)</label>
-                            <input type="number" x-model.number="costs.marketing" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Misc Domains/Tools ($)</label>
-                            <input type="number" x-model.number="costs.misc" class="w-full bg-neutral-950 border border-neutral-700 rounded p-2 text-white outline-none focus:border-amber-500">
-                        </div>
-                    </div>
-                </div>
+        <!-- GAME VISUALS AREA -->
+        <div id="game-container">
+            <div id="level-info">
+                <strong id="instruction-title">Task:</strong>
+                <p id="instruction-text">The bot is offline. Write <code>robot.move()</code> to reach the charging port (Gold Square).</p>
             </div>
-
-            <!-- DASHBOARD OUTPUT -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Summary KPI Cards -->
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-                        <div class="text-sm text-neutral-400 font-semibold uppercase tracking-wider mb-2">Total Monthly Revenue</div>
-                        <div class="text-4xl font-black text-emerald-400" x-text="format(totalRevenue)"></div>
-                    </div>
-                    <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-                        <div class="text-sm text-neutral-400 font-semibold uppercase tracking-wider mb-2">Total Monthly Expenses</div>
-                        <div class="text-4xl font-black text-rose-400" x-text="format(totalExpenses)"></div>
-                    </div>
-                    <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 col-span-2">
-                        <div class="text-sm text-neutral-400 font-semibold uppercase tracking-wider mb-2">Estimated Monthly Net Profit</div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-5xl font-black" :class="netProfit >= 0 ? 'text-white' : 'text-rose-500'" x-text="format(netProfit)"></div>
-                            <div class="px-3 py-1 rounded-full text-sm font-bold" :class="netProfit >= 0 ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'" x-text="marginPercent + '% Margin'"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Breakdown Table -->
-                <div class="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-                    <div class="px-6 py-4 border-b border-neutral-800 bg-neutral-800/50">
-                        <h3 class="font-bold text-white">Line Item Breakdown</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="text-neutral-400 uppercase tracking-wider bg-neutral-950/50">
-                                <tr>
-                                    <th class="px-6 py-3 font-semibold">Category</th>
-                                    <th class="px-6 py-3 font-semibold">Item</th>
-                                    <th class="px-6 py-3 font-semibold text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-neutral-800">
-                                <!-- Revenue -->
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-emerald-400 font-medium">Revenue</td>
-                                    <td class="px-6 py-3">Single Tour Sales</td>
-                                    <td class="px-6 py-3 text-right font-mono" x-text="format(revSingle)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-emerald-400 font-medium">Revenue</td>
-                                    <td class="px-6 py-3">Active Seller Subs</td>
-                                    <td class="px-6 py-3 text-right font-mono" x-text="format(revMonthly)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-emerald-400 font-medium">Revenue</td>
-                                    <td class="px-6 py-3">Lifetime Packages</td>
-                                    <td class="px-6 py-3 text-right font-mono" x-text="format(revLifetime)"></td>
-                                </tr>
-
-                                <!-- Expenses (Variable) -->
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-rose-400 font-medium">Expense (Var)</td>
-                                    <td class="px-6 py-3">Stripe Processing Fees</td>
-                                    <td class="px-6 py-3 text-right font-mono text-rose-300" x-text="'-' + format(expStripe)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-rose-400 font-medium">Expense (Var)</td>
-                                    <td class="px-6 py-3">ElevenLabs API Usage</td>
-                                    <td class="px-6 py-3 text-right font-mono text-rose-300" x-text="'-' + format(expElevenLabs)"></td>
-                                </tr>
-
-                                <!-- Expenses (Fixed) -->
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-amber-400 font-medium">Expense (Fixed)</td>
-                                    <td class="px-6 py-3">Supabase</td>
-                                    <td class="px-6 py-3 text-right font-mono text-amber-200" x-text="'-' + format(costs.supabase)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-amber-400 font-medium">Expense (Fixed)</td>
-                                    <td class="px-6 py-3">Vercel</td>
-                                    <td class="px-6 py-3 text-right font-mono text-amber-200" x-text="'-' + format(costs.vercel)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-amber-400 font-medium">Expense (Fixed)</td>
-                                    <td class="px-6 py-3">Marketing & Ads</td>
-                                    <td class="px-6 py-3 text-right font-mono text-amber-200" x-text="'-' + format(costs.marketing)"></td>
-                                </tr>
-                                <tr class="hover:bg-neutral-800/30">
-                                    <td class="px-6 py-3 text-amber-400 font-medium">Expense (Fixed)</td>
-                                    <td class="px-6 py-3">Misc (Domains/Tools)</td>
-                                    <td class="px-6 py-3 text-right font-mono text-amber-200" x-text="'-' + format(costs.misc)"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <canvas id="game-canvas" width="400" height="400"></canvas>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('budgetCalculator', () => ({
-                sales: {
-                    single: { count: 15, price: 20 },
-                    monthly: { count: 10, price: 50 },
-                    lifetime: { count: 2, price: 100 }
-                },
-                costs: {
-                    gensPerUser: 4,
-                    elevenLabsPerGen: 0.15,
-                    stripePercent: 2.9,
-                    stripeFixed: 0.30,
-                    supabase: 25,
-                    vercel: 20,
-                    marketing: 150,
-                    misc: 20
-                },
+    <!-- PYTHON LOGIC -->
+    <script type="text/python">
+from browser import document, window, timer, alert
+import math
 
-                // Getters for Revenue
-                get revSingle() { return this.sales.single.count * this.sales.single.price; },
-                get revMonthly() { return this.sales.monthly.count * this.sales.monthly.price; },
-                get revLifetime() { return this.sales.lifetime.count * this.sales.lifetime.price; },
-                get totalRevenue() { return this.revSingle + this.revMonthly + this.revLifetime; },
-                get totalTransactions() { return this.sales.single.count + this.sales.monthly.count + this.sales.lifetime.count; },
-                get totalUsers() { return this.totalTransactions; },
+# Global Game State
+class GameState:
+    def __init__(self):
+        self.level = 0
+        self.grid_size = 8
+        self.cell_size = 400 // self.grid_size
+        self.bot_pos = [1, 1]
+        self.goal_pos = [6, 1]
+        self.walls = []
+        self.actions = [] # List of movements to animate
+        self.is_animating = False
 
-                // Getters for Expenses
-                get expStripe() { 
-                    const variableFee = this.totalRevenue * (this.costs.stripePercent / 100);
-                    const fixedFee = this.totalTransactions * this.costs.stripeFixed;
-                    return variableFee + fixedFee; 
-                },
-                get expElevenLabs() { return this.totalUsers * this.costs.gensPerUser * this.costs.elevenLabsPerGen; },
-                get fixedCosts() { return this.costs.supabase + this.costs.vercel + this.costs.marketing + this.costs.misc; },
-                get totalExpenses() { return this.expStripe + this.expElevenLabs + this.fixedCosts; },
+    def reset_level(self):
+        self.actions = []
+        self.is_animating = False
+        if self.level == 0:
+            self.bot_pos = [1, 1]
+            self.goal_pos = [6, 1]
+            self.walls = []
+        elif self.level == 1:
+            self.bot_pos = [1, 1]
+            self.goal_pos = [1, 6]
+            self.walls = [[1, 3], [2, 3], [3, 3], [0, 3]]
+        elif self.level == 2:
+            self.bot_pos = [1, 1]
+            self.goal_pos = [6, 6]
+            self.walls = [[3, i] for i in range(7)]
 
-                get netProfit() { return this.totalRevenue - this.totalExpenses; },
-                get marginPercent() { 
-                    if (this.totalRevenue === 0) return 0;
-                    return ((this.netProfit / this.totalRevenue) * 100).toFixed(1); 
-                },
+    def next_level(self):
+        self.level += 1
+        levels = [
+            {"title": "LEVEL 2: OBSTACLE", "desc": "Move the bot down 5 times to reach the goal. Use robot.move() multiple times."},
+            {"title": "LEVEL 3: THE LOOP", "desc": "The corridor is long. Use a 'for' loop to move 5 times: \n\nfor i in range(5):\n    robot.move()"},
+            {"title": "DECK CLEARED", "desc": "You fixed the robot! Python skills: MASTERED."}
+        ]
+        if self.level < len(levels):
+            document["level-display"].text = levels[self.level-1]["title"]
+            document["instruction-text"].html = levels[self.level-1]["desc"]
+            self.reset_level()
+            render()
+        else:
+            alert("Congratulations! You completed all levels.")
 
-                format(val) {
-                    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
-                },
+state = GameState()
 
-                exportCSV() {
-                    const rows = [
-                        ["Category", "Item", "Type", "Amount (USD)"],
-                        ["Revenue", "Single Tour Sales", "Variable", this.revSingle.toFixed(2)],
-                        ["Revenue", "Active Seller Subs", "Variable", this.revMonthly.toFixed(2)],
-                        ["Revenue", "Lifetime Packages", "Variable", this.revLifetime.toFixed(2)],
-                        ["Expense", "Stripe Processing Fees", "Variable", "-" + this.expStripe.toFixed(2)],
-                        ["Expense", "ElevenLabs API Usage", "Variable", "-" + this.expElevenLabs.toFixed(2)],
-                        ["Expense", "Supabase", "Fixed", "-" + this.costs.supabase.toFixed(2)],
-                        ["Expense", "Vercel", "Fixed", "-" + this.costs.vercel.toFixed(2)],
-                        ["Expense", "Marketing & Ads", "Fixed", "-" + this.costs.marketing.toFixed(2)],
-                        ["Expense", "Misc (Domains/Tools)", "Fixed", "-" + this.costs.misc.toFixed(2)],
-                        ["", "", "", ""],
-                        ["Summary", "Total Monthly Revenue", "", this.totalRevenue.toFixed(2)],
-                        ["Summary", "Total Monthly Expenses", "", "-" + this.totalExpenses.toFixed(2)],
-                        ["Summary", "Estimated Monthly Net Profit", "", this.netProfit.toFixed(2)],
-                        ["Summary", "Margin %", "", this.marginPercent + "%"]
-                    ];
+# The Robot API (Exposed to the user)
+class Robot:
+    def move(self):
+        state.actions.append("move")
+    
+    def turn(self):
+        # Placeholder for more complex levels
+        pass
 
-                    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", "clover-financial-budget.csv");
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            }));
-        });
+robot = Robot()
+
+# Rendering Logic
+def render():
+    canvas = document["game-canvas"]
+    ctx = canvas.getContext("2d")
+    
+    # Clear canvas
+    ctx.clearRect(0, 0, 400, 400)
+    
+    # Draw Grid
+    ctx.strokeStyle = "#222"
+    for i in range(state.grid_size):
+        for j in range(state.grid_size):
+            ctx.strokeRect(i*state.cell_size, j*state.cell_size, state.cell_size, state.cell_size)
+            
+    # Draw Walls
+    ctx.fillStyle = "#444"
+    for wall in state.walls:
+        ctx.fillRect(wall[0]*state.cell_size, wall[1]*state.cell_size, state.cell_size, state.cell_size)
+
+    # Draw Goal
+    ctx.fillStyle = "gold"
+    ctx.fillRect(state.goal_pos[0]*state.cell_size + 10, state.goal_pos[1]*state.cell_size + 10, 30, 30)
+
+    # Draw Robot
+    ctx.fillStyle = "#00ff41"
+    ctx.fillRect(state.bot_pos[0]*state.cell_size + 5, state.bot_pos[1]*state.cell_size + 5, 40, 40)
+
+def animate_step():
+    if not state.actions:
+        state.is_animating = False
+        check_win()
+        return
+
+    action = state.actions.pop(0)
+    if action == "move":
+        # Simple movement logic for this demo (moving right/down based on level)
+        if state.level == 0: state.bot_pos[0] += 1
+        elif state.level == 1: state.bot_pos[1] += 1
+        elif state.level == 2: 
+             # Logic for level 3 loop demonstration
+             if state.bot_pos[0] < 6: state.bot_pos[0] += 1
+             else: state.bot_pos[1] += 1
+             
+    render()
+    timer.set_timeout(animate_step, 300)
+
+def check_win():
+    if state.bot_pos == state.goal_pos:
+        document["output-log"].html = '<span class="success">MISSION SUCCESS! Re-routing to next deck...</span>'
+        timer.set_timeout(state.next_level, 2000)
+    else:
+        document["output-log"].html = '<span class="error">Robot stopped. Goal not reached.</span>'
+
+def run_code(ev):
+    if state.is_animating: return
+    
+    user_code = document["code-editor"].value
+    document["output-log"].text = "Executing script..."
+    
+    try:
+        # Execute the Python code in the context of our robot object
+        exec(user_code, {"robot": robot, "range": range})
+        state.is_animating = True
+        animate_step()
+    except Exception as e:
+        document["output-log"].html = f'<span class="error">SYNTAX ERROR: {str(e)}</span>'
+
+def reset_game(ev):
+    state.reset_level()
+    render()
+    document["output-log"].text = "Robot reset."
+
+# Bind buttons
+document["run-btn"].bind("click", run_code)
+document["reset-btn"].bind("click", reset_game)
+
+# Initial Draw
+render()
     </script>
 </body>
 </html>
