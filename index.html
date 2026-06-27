@@ -32,9 +32,38 @@
                         <input type="text" id="businessName" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. Luigi's Pizza">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-neutral-300 mb-2">Industry / Niche</label>
-                        <input type="text" id="industry" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. Italian Restaurant in NY">
+                        <label class="block text-sm font-semibold text-neutral-300 mb-2">Industry</label>
+                        <select id="industry" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                            <option value="Restaurant / Cafe">Restaurant / Cafe</option>
+                            <option value="Retail Store">Retail Store</option>
+                            <option value="Dental Clinic">Dental Clinic</option>
+                            <option value="Medical Clinic">Medical Clinic</option>
+                            <option value="Law Firm">Law Firm</option>
+                            <option value="Accounting / Finance">Accounting / Finance</option>
+                            <option value="HVAC">HVAC</option>
+                            <option value="Roofing">Roofing</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Electrician">Electrician</option>
+                            <option value="Landscaping">Landscaping</option>
+                            <option value="Cleaning Services">Cleaning Services</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Auto Repair / Dealership">Auto Repair / Dealership</option>
+                            <option value="Gym / Fitness">Gym / Fitness</option>
+                            <option value="Salon / Spa">Salon / Spa</option>
+                            <option value="Pet Services">Pet Services</option>
+                            <option value="other">Custom / Other</option>
+                        </select>
                     </div>
+                </div>
+                
+                <div id="customIndustryContainer" class="hidden">
+                    <label class="block text-sm font-semibold text-neutral-300 mb-2">Custom Industry</label>
+                    <input type="text" id="customIndustry" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. Landscaping">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-neutral-300 mb-2">Zip Code</label>
+                    <input type="text" id="zipcode" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. 90210">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-neutral-300 mb-2">Gemini API Key (Required)</label>
@@ -54,6 +83,19 @@
     </div>
 
     <script>
+            const industrySelect = document.getElementById('industry');
+            const customIndustryContainer = document.getElementById('customIndustryContainer');
+            
+            industrySelect.addEventListener('change', (e) => {
+                if (e.target.value === 'other') {
+                    customIndustryContainer.classList.remove('hidden');
+                    document.getElementById('customIndustry').required = true;
+                } else {
+                    customIndustryContainer.classList.add('hidden');
+                    document.getElementById('customIndustry').required = false;
+                }
+            });
+
         document.getElementById('plannerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -64,8 +106,17 @@
             const resultContent = document.getElementById('resultContent');
             
             const businessName = document.getElementById('businessName').value;
-            const industry = document.getElementById('industry').value;
+            let industry = document.getElementById('industry').value;
+            const customIndustry = document.getElementById('customIndustry').value;
+            const zipcode = document.getElementById('zipcode').value;
             const apiKey = document.getElementById('apiKey').value;
+
+            if (industry === 'other') {
+                industry = customIndustry;
+            }
+            
+            // Combine industry and zipcode for the prompt
+            const fullNiche = `${industry} in ${zipcode}`;
 
             // UI Loading state
             btn.disabled = true;
@@ -74,18 +125,18 @@
             resultContainer.classList.add('hidden');
             resultContent.innerHTML = '';
 
-            const prompt = \`Act as a top-tier Generative Engine Optimization (GEO) expert. 
-A business named "\${businessName}" operating in the "\${industry}" space needs a concrete, 3-step action plan to improve their AI search score and rank higher in ChatGPT, Google AI Overviews, and Perplexity.
+            const prompt = `Act as a top-tier Generative Engine Optimization (GEO) expert. 
+A business named "${businessName}" operating in the "${fullNiche}" space needs a concrete, 3-step action plan to improve their AI search score and rank higher in ChatGPT, Google AI Overviews, and Perplexity.
 
 Create a highly-structured, actionable plan formatted in Markdown with the following 3 steps:
 1. **Directory Consolidation:** How to ensure their business data is consistent across platforms that feed AI models. Give specific platforms relevant to their industry.
 2. **Knowledge Graph Injection:** How to get mentioned on high-authority sites that AIs trust. Give specific PR/Outreach strategies.
 3. **Conversational Content:** How to structure their website FAQs to perfectly answer AI queries. Give 3 example FAQ questions they should put on their site immediately.
 
-Keep the tone professional, urgent, and highly valuable. Do not use generic fluff.\`;
+Keep the tone professional, urgent, and highly valuable. Do not use generic fluff.`;
 
             try {
-                const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${apiKey}\`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -104,7 +155,7 @@ Keep the tone professional, urgent, and highly valuable. Do not use generic fluf
                 resultContent.innerHTML = marked.parse(text);
                 resultContainer.classList.remove('hidden');
             } catch (error) {
-                resultContent.innerHTML = \`<p class="text-rose-500 font-bold">\${error.message}</p>\`;
+                resultContent.innerHTML = `<p class="text-rose-500 font-bold">${error.message}</p>`;
                 resultContainer.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
