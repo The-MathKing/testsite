@@ -3,299 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Py-bot: Maintenance Deck</title>
-    <!-- Load Brython (Python in the Browser) -->
-    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
-    
+    <title>AI Score Action Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --bg: #0a0a0c;
-            --terminal: #121214;
-            --accent: #00ff41; /* Classic Terminal Green */
-            --text: #e0e0e0;
-            --danger: #ff4b2b;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        header {
-            padding: 10px 20px;
-            background: #1a1a1d;
-            border-bottom: 2px solid var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* Left Side: The Code Editor */
-        #editor-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--terminal);
-            padding: 15px;
-            border-right: 1px solid #333;
-        }
-
-        h3 { margin-top: 0; color: var(--accent); font-size: 1rem; }
-
-        #code-editor {
-            flex: 1;
-            background: #000;
-            color: var(--accent);
-            border: 1px solid #444;
-            padding: 10px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 16px;
-            resize: none;
-            outline: none;
-        }
-
-        #controls {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        button:hover { opacity: 0.8; }
-        #reset-btn { background: #555; color: white; }
-
-        /* Right Side: Game View */
-        #game-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: #0d0d0f;
-        }
-
-        #game-canvas {
-            background: #111;
-            border: 2px solid #333;
-            image-rendering: pixelated;
-        }
-
-        #level-info {
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #1a1a1d;
-            border-left: 4px solid var(--accent);
-        }
-
-        #output-log {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #aaa;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-
-        .error { color: var(--danger); }
-        .success { color: var(--accent); font-weight: bold; }
+        body { background-color: #0a0a0a; color: #f5f5f5; font-family: 'Inter', sans-serif; }
+        .prose h1 { color: #10b981; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .prose h2 { color: #34d399; font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .prose h3 { color: #6ee7b7; font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.6; color: #d4d4d8; }
+        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1rem; list-style-position: outside; }
+        .prose li { margin-bottom: 0.25rem; color: #d4d4d8; list-style-type: disc; }
+        .prose strong { color: #f4f4f5; }
     </style>
 </head>
-<body onload="brython()">
-
-    <header>
-        <div>PY-BOT v1.0.4 // REMOTE TERMINAL</div>
-        <div id="level-display">LEVEL 1: WAKE UP</div>
-    </header>
-
-    <div id="main-container">
-        <!-- CODE EDITOR AREA -->
-        <div id="editor-container">
-            <h3>&gt; MISSION_SCRIPT.PY</h3>
-            <textarea id="code-editor" spellcheck="false"># Level 1: Wake up the bot.
-# Type: robot.move()
-# Then click RUN SCRIPT.
-
-robot.move()</textarea>
-            <div id="controls">
-                <button id="run-btn">RUN SCRIPT</button>
-                <button id="reset-btn">RESET BOT</button>
-            </div>
-            <div id="output-log">System initialized. Awaiting commands...</div>
+<body class="min-h-screen flex flex-col items-center py-12 px-6">
+    <div class="max-w-3xl w-full">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-4">GEO Action Plan Generator</h1>
+            <p class="text-neutral-400 text-lg">Generate a custom step-by-step Generative Engine Optimization plan to improve your AI search score.</p>
         </div>
 
-        <!-- GAME VISUALS AREA -->
-        <div id="game-container">
-            <div id="level-info">
-                <strong id="instruction-title">Task:</strong>
-                <p id="instruction-text">The bot is offline. Write <code>robot.move()</code> to reach the charging port (Gold Square).</p>
-            </div>
-            <canvas id="game-canvas" width="400" height="400"></canvas>
+        <div class="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 mb-8 shadow-xl shadow-emerald-900/20">
+            <form id="plannerForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-neutral-300 mb-2">Business Name</label>
+                        <input type="text" id="businessName" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. Luigi's Pizza">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-neutral-300 mb-2">Industry / Niche</label>
+                        <input type="text" id="industry" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="e.g. Italian Restaurant in NY">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-neutral-300 mb-2">Gemini API Key (Required)</label>
+                    <input type="password" id="apiKey" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="AIzaSy...">
+                    <p class="text-xs text-neutral-500 mt-2">Stored only in your browser memory for this session.</p>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-lg transition-all flex items-center justify-center gap-2">
+                    <span id="btnText">Generate Action Plan</span>
+                    <svg id="spinner" class="animate-spin hidden w-5 h-5 text-neutral-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+            </form>
+        </div>
+
+        <div id="resultContainer" class="hidden bg-neutral-900 border border-neutral-800 rounded-3xl p-8 shadow-xl">
+            <div id="resultContent" class="prose"></div>
         </div>
     </div>
 
-    <!-- PYTHON LOGIC -->
-    <script type="text/python">
-from browser import document, window, timer, alert
-import math
-
-# Global Game State
-class GameState:
-    def __init__(self):
-        self.level = 0
-        self.grid_size = 8
-        self.cell_size = 400 // self.grid_size
-        self.bot_pos = [1, 1]
-        self.goal_pos = [6, 1]
-        self.walls = []
-        self.actions = [] # List of movements to animate
-        self.is_animating = False
-
-    def reset_level(self):
-        self.actions = []
-        self.is_animating = False
-        if self.level == 0:
-            self.bot_pos = [1, 1]
-            self.goal_pos = [6, 1]
-            self.walls = []
-        elif self.level == 1:
-            self.bot_pos = [1, 1]
-            self.goal_pos = [1, 6]
-            self.walls = [[1, 3], [2, 3], [3, 3], [0, 3]]
-        elif self.level == 2:
-            self.bot_pos = [1, 1]
-            self.goal_pos = [6, 6]
-            self.walls = [[3, i] for i in range(7)]
-
-    def next_level(self):
-        self.level += 1
-        levels = [
-            {"title": "LEVEL 2: OBSTACLE", "desc": "Move the bot down 5 times to reach the goal. Use robot.move() multiple times."},
-            {"title": "LEVEL 3: THE LOOP", "desc": "The corridor is long. Use a 'for' loop to move 5 times: \n\nfor i in range(5):\n    robot.move()"},
-            {"title": "DECK CLEARED", "desc": "You fixed the robot! Python skills: MASTERED."}
-        ]
-        if self.level < len(levels):
-            document["level-display"].text = levels[self.level-1]["title"]
-            document["instruction-text"].html = levels[self.level-1]["desc"]
-            self.reset_level()
-            render()
-        else:
-            alert("Congratulations! You completed all levels.")
-
-state = GameState()
-
-# The Robot API (Exposed to the user)
-class Robot:
-    def move(self):
-        state.actions.append("move")
-    
-    def turn(self):
-        # Placeholder for more complex levels
-        pass
-
-robot = Robot()
-
-# Rendering Logic
-def render():
-    canvas = document["game-canvas"]
-    ctx = canvas.getContext("2d")
-    
-    # Clear canvas
-    ctx.clearRect(0, 0, 400, 400)
-    
-    # Draw Grid
-    ctx.strokeStyle = "#222"
-    for i in range(state.grid_size):
-        for j in range(state.grid_size):
-            ctx.strokeRect(i*state.cell_size, j*state.cell_size, state.cell_size, state.cell_size)
+    <script>
+        document.getElementById('plannerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-    # Draw Walls
-    ctx.fillStyle = "#444"
-    for wall in state.walls:
-        ctx.fillRect(wall[0]*state.cell_size, wall[1]*state.cell_size, state.cell_size, state.cell_size)
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            const businessName = document.getElementById('businessName').value;
+            const industry = document.getElementById('industry').value;
+            const apiKey = document.getElementById('apiKey').value;
 
-    # Draw Goal
-    ctx.fillStyle = "gold"
-    ctx.fillRect(state.goal_pos[0]*state.cell_size + 10, state.goal_pos[1]*state.cell_size + 10, 30, 30)
+            // UI Loading state
+            btn.disabled = true;
+            btnText.textContent = 'Analyzing AI Overviews...';
+            spinner.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            resultContent.innerHTML = '';
 
-    # Draw Robot
-    ctx.fillStyle = "#00ff41"
-    ctx.fillRect(state.bot_pos[0]*state.cell_size + 5, state.bot_pos[1]*state.cell_size + 5, 40, 40)
+            const prompt = \`Act as a top-tier Generative Engine Optimization (GEO) expert. 
+A business named "\${businessName}" operating in the "\${industry}" space needs a concrete, 3-step action plan to improve their AI search score and rank higher in ChatGPT, Google AI Overviews, and Perplexity.
 
-def animate_step():
-    if not state.actions:
-        state.is_animating = False
-        check_win()
-        return
+Create a highly-structured, actionable plan formatted in Markdown with the following 3 steps:
+1. **Directory Consolidation:** How to ensure their business data is consistent across platforms that feed AI models. Give specific platforms relevant to their industry.
+2. **Knowledge Graph Injection:** How to get mentioned on high-authority sites that AIs trust. Give specific PR/Outreach strategies.
+3. **Conversational Content:** How to structure their website FAQs to perfectly answer AI queries. Give 3 example FAQ questions they should put on their site immediately.
 
-    action = state.actions.pop(0)
-    if action == "move":
-        # Simple movement logic for this demo (moving right/down based on level)
-        if state.level == 0: state.bot_pos[0] += 1
-        elif state.level == 1: state.bot_pos[1] += 1
-        elif state.level == 2: 
-             # Logic for level 3 loop demonstration
-             if state.bot_pos[0] < 6: state.bot_pos[0] += 1
-             else: state.bot_pos[1] += 1
-             
-    render()
-    timer.set_timeout(animate_step, 300)
+Keep the tone professional, urgent, and highly valuable. Do not use generic fluff.\`;
 
-def check_win():
-    if state.bot_pos == state.goal_pos:
-        document["output-log"].html = '<span class="success">MISSION SUCCESS! Re-routing to next deck...</span>'
-        timer.set_timeout(state.next_level, 2000)
-    else:
-        document["output-log"].html = '<span class="error">Robot stopped. Goal not reached.</span>'
+            try {
+                const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${apiKey}\`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.7 }
+                    })
+                });
 
-def run_code(ev):
-    if state.is_animating: return
-    
-    user_code = document["code-editor"].value
-    document["output-log"].text = "Executing script..."
-    
-    try:
-        # Execute the Python code in the context of our robot object
-        exec(user_code, {"robot": robot, "range": range})
-        state.is_animating = True
-        animate_step()
-    except Exception as e:
-        document["output-log"].html = f'<span class="error">SYNTAX ERROR: {str(e)}</span>'
+                if (!response.ok) {
+                    throw new Error("Failed to authenticate or generate plan. Check your API key.");
+                }
 
-def reset_game(ev):
-    state.reset_level()
-    render()
-    document["output-log"].text = "Robot reset."
-
-# Bind buttons
-document["run-btn"].bind("click", run_code)
-document["reset-btn"].bind("click", reset_game)
-
-# Initial Draw
-render()
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                
+                resultContent.innerHTML = marked.parse(text);
+                resultContainer.classList.remove('hidden');
+            } catch (error) {
+                resultContent.innerHTML = \`<p class="text-rose-500 font-bold">\${error.message}</p>\`;
+                resultContainer.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Generate Action Plan';
+                spinner.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
