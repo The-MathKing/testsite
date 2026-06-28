@@ -267,6 +267,10 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
 
             const element = document.getElementById('printTemplate');
             element.style.display = 'block'; // Ensure it is rendered in DOM layout
+            element.style.position = 'absolute';
+            element.style.left = '0px';
+            element.style.top = window.scrollY + 'px';
+            element.style.zIndex = '9999';
             
             // Group sections into unbreakable blocks to prevent orphaned headers
             const printContent = document.getElementById('printContent');
