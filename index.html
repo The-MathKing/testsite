@@ -19,7 +19,7 @@
         .prose strong { color: #f4f4f5; }
 
         /* Print Template Styles for PDF - Dark Mode */
-        #printTemplate { position: fixed; top: 0; left: -9999px; background-color: #0a0a0a; color: #f5f5f5; font-family: 'Inter', sans-serif; padding: 12mm; width: 800px; box-sizing: border-box; z-index: 50; }
+        #printTemplate { display: none; background-color: #0a0a0a; color: #f5f5f5; font-family: 'Inter', sans-serif; padding: 12mm; width: 800px; box-sizing: border-box; }
         #printTemplate .print-prose h1 { color: #10b981; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
         #printTemplate .print-prose h2 { color: #10b981; font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
         #printTemplate .print-prose h3 { color: #34d399; font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
@@ -266,6 +266,7 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
             document.getElementById('printContent').innerHTML = document.getElementById('resultContent').innerHTML;
 
             const element = document.getElementById('printTemplate');
+            element.style.display = 'block'; // Ensure it is rendered in DOM layout
             
             // Group sections into unbreakable blocks to prevent orphaned headers
             const printContent = document.getElementById('printContent');
@@ -365,13 +366,14 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
                 margin:       0,
                 filename:     `${businessName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_GEO_Plan.pdf`,
                 image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', windowWidth: 800, scrollY: 0, scrollX: 0 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', windowWidth: 800 },
                 jsPDF:        { unit: 'px', format: [800, 1131], orientation: 'portrait' }
             };
 
             // Wait 300ms for Chart.js to finish painting
             await new Promise(r => setTimeout(r, 300));
             await html2pdf().set(opt).from(element).save();
+            element.style.display = 'none'; // Hide again after generation
         });
     </script>
 </body>
