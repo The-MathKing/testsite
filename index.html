@@ -366,7 +366,7 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
                 margin:       0,
                 filename:     `${businessName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_GEO_Plan.pdf`,
                 image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', windowWidth: 800 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', windowWidth: 800, scrollY: 0, scrollX: 0 },
                 jsPDF:        { unit: 'px', format: [800, 1131], orientation: 'portrait' }
             };
 
