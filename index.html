@@ -284,6 +284,16 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
             document.getElementById('printContent').innerHTML = document.getElementById('resultContent').innerHTML;
 
             const element = document.getElementById('printTemplate');
+            
+            // Create a fixed wrapper at top-left to completely isolate the template from body flexbox layout
+            const printWrapper = document.createElement('div');
+            printWrapper.style.position = 'fixed';
+            printWrapper.style.top = '0px';
+            printWrapper.style.left = '0px';
+            printWrapper.style.zIndex = '9999';
+            document.body.appendChild(printWrapper);
+            printWrapper.appendChild(element); // Move template out of the flex body
+            
             element.style.display = 'block'; // Ensure it is rendered in DOM layout
             
             // Group sections into unbreakable blocks to prevent orphaned headers
@@ -392,6 +402,10 @@ Where scores and growths are arrays of realistic integers. For currentScores, gi
             await new Promise(r => setTimeout(r, 300));
             await html2pdf().set(opt).from(element).save();
             element.style.display = 'none'; // Hide again after generation
+            
+            // Move template back to original place and cleanup wrapper
+            document.body.appendChild(element);
+            document.body.removeChild(printWrapper);
         });
     </script>
 </body>
